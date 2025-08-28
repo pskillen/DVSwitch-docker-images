@@ -1,0 +1,4 @@
+*.env
+*.log
+compose/env/*.env
+**/config/*.real.*
