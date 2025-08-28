@@ -1,0 +1,60 @@
+name: CI - PR
+
+on:
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build images (amd64)
+        uses: docker/bake-action@v5
+        with:
+          files: |
+            ./docker/mmdvm_bridge/Dockerfile
+            ./docker/analog_bridge/Dockerfile
+            ./docker/analog_reflector/Dockerfile
+          targets: |
+            default
+          set: |
+            *.platform=linux/amd64
+
+      - name: Compose up
+        run: |
+          docker compose -f compose/docker-compose.local.yml --profile local up -d --build
+
+      - name: Wait for health
+        run: |
+          set -eux
+          end=$((SECONDS+300))
+          while [ $SECONDS -lt $end ]; do
+            unhealthy=$(docker ps --format '{{.Names}} {{.Status}}' | grep -E '(unhealthy|Restarting)' || true)
+            if [ -z "$unhealthy" ]; then
+              states=$(docker ps --format '{{.Names}} {{.Status}}')
+              echo "$states"
+              ready=$(echo "$states" | grep -c '(healthy)')
+              if [ "$ready" -ge 3 ]; then
+                exit 0
+              fi
+            fi
+            sleep 5
+          done
+          echo "Services did not become healthy in time" >&2
+          exit 1
+
+      - name: Show logs on failure
+        if: failure()
+        run: |
+          docker compose -f compose/docker-compose.local.yml logs --no-color || true
+

@@ -2,3 +2,8 @@
 compose
 **/*.env
 **/*.log
+
+.git
+compose
+**/*.env
+**/*.log
