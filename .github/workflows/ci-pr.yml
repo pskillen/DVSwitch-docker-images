@@ -63,5 +63,5 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: |
-          docker compose -f compose/docker-compose.local.yml logs --no-color || true
+          docker compose -f compose/docker-compose.local.yaml logs --no-color || true
 
