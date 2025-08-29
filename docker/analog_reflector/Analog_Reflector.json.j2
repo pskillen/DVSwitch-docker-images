@@ -1,0 +1,24 @@
+{
+  "general": {
+    "logLevel": {{ LOG_LEVEL | default(1) }},
+    "mqtt": {
+      "enabled": false,
+      "broker": "",
+      "port": 1883,
+      "username": "",
+      "password": ""
+    }
+  },
+  "network": {
+    "mobilePort": {{ MOBILE_PORT | default(12345) }},
+    "clientToken": "{{ CLIENT_TOKEN | default('') }}",
+    "serverIp": "0.0.0.0",
+    "serverPort": {{ MOBILE_PORT | default(12345) }}
+  },
+  "usrp": {
+    "peerHost": "{{ USRP_PEER_HOST | default('analog_bridge') }}",
+    "peerPort": {{ USRP_PEER_PORT | default(32001) }},
+    "localPort": {{ (USRP_PEER_PORT | default(32001) | int) + 1 }}
+  }
+}
+
