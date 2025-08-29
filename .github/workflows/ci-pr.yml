@@ -18,11 +18,20 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build images (amd64)
+      - name: Build mmdvm_bridge
         run: |
-          docker buildx build --platform linux/amd64 -f docker/mmdvm_bridge/Dockerfile -t dvswitch/mmdvm_bridge:local --load .
-          docker buildx build --platform linux/amd64 -f docker/analog_bridge/Dockerfile -t dvswitch/analog_bridge:local --load .
-          docker buildx build --platform linux/amd64 -f docker/analog_reflector/Dockerfile -t dvswitch/analog_reflector:local --load .
+          docker buildx build --platform linux/amd64 -f Dockerfile -t dvswitch/mmdvm_bridge:local --load .
+        working-directory: docker/mmdvm_bridge
+
+      - name: Build analog_bridge
+        run: |
+          docker buildx build --platform linux/amd64 -f Dockerfile -t dvswitch/analog_bridge:local --load .
+        working-directory: docker/analog_bridge
+
+      - name: Build analog_reflector
+        run: |
+          docker buildx build --platform linux/amd64 -f Dockerfile -t dvswitch/analog_reflector:local --load .
+        working-directory: docker/analog_reflector
 
       - name: Compose up
         run: |
