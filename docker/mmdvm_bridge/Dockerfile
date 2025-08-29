@@ -24,15 +24,15 @@ RUN apt-get update \
        libjsoncpp-dev \
        iproute2 \
        procps \
+       python3 \
+       python3-jinja2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Build MMDVM_Bridge from source
+# Install MMDVM_Bridge from pre-built binaries
 WORKDIR /tmp/build
 RUN git clone --depth 1 https://github.com/DVSwitch/MMDVM_Bridge.git \
-    && cd MMDVM_Bridge \
-    && make -j"$(nproc)" \
-    && install -m 0755 MMDVM_Bridge /usr/local/bin/MMDVM_Bridge \
-    && strip /usr/local/bin/MMDVM_Bridge || true \
+    && cd MMDVM_Bridge/bin \
+    && install -m 0755 MMDVM_Bridge.amd64 /usr/local/bin/MMDVM_Bridge \
     && cd / \
     && rm -rf /tmp/build
 
@@ -41,9 +41,10 @@ RUN useradd -r -u 1000 -g nogroup -d /var/lib/dvswitch -s /usr/sbin/nologin dvsw
     && mkdir -p /var/lib/dvswitch /etc/dvswitch /config \
     && chown -R dvswitch:nogroup /var/lib/dvswitch /etc/dvswitch /config
 
-# Copy entrypoint and sample config
+# Copy entrypoint and template
+# Note: Build context is pinned as the dir containing the Dockerfile. Do not change.
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY config/mmdvm_bridge.ini /usr/share/dvswitch/mmdvm_bridge.sample.ini
+COPY mmdvm_bridge.ini.j2 /usr/share/dvswitch/mmdvm_bridge.ini.j2
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER dvswitch

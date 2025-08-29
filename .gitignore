@@ -1,9 +1,4 @@
-*.env
+.env
+.env.*
 *.log
-compose/env/*.env
-**/config/*.real.*
-
-*.env
-*.log
-compose/env/*.env
 **/config/*.real.*

@@ -8,7 +8,7 @@ build:
 	docker buildx build --load -f docker/analog_reflector/Dockerfile -t dvswitch/analog_reflector:local .
 
 up:
-	docker compose -f compose/docker-compose.local.yml --profile local up -d --build
+	docker compose -f compose/docker-compose.local.yml up -d --build
 
 down:
 	docker compose -f compose/docker-compose.local.yml down -v --remove-orphans

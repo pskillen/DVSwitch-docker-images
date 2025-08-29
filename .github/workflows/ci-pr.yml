@@ -26,7 +26,7 @@ jobs:
 
       - name: Compose up
         run: |
-          docker compose -f compose/docker-compose.local.yml --profile local up -d --build
+          docker compose -f compose/docker-compose.local.yaml up -d --build
 
       - name: Wait for health
         run: |

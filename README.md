@@ -8,7 +8,7 @@ Dockerized server-side DVSwitch stack with MMDVM_Bridge, Analog_Bridge, and Anal
    - `cp compose/env/*.example compose/env/`
    - Edit `compose/env/*.env` for your local values (keep placeholders for CI).
 2. Build and start:
-   - `docker compose -f compose/docker-compose.local.yml --profile local up -d --build`
+   - `docker compose -f compose/docker-compose.local.yml up -d --build`
 3. Point DVSwitch Mobile to AR:
    - Host: `tcp://localhost:12345`
 

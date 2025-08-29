@@ -1,0 +1,20 @@
+; MMDVM_Bridge configuration template
+; Generated from environment variables at runtime
+
+[General]
+; RptProtocol can be USRP for Analog_Bridge interop
+RptProtocol=USRP
+Daemon=0
+Callsign={{ MY_CALLSIGN | default('N0CALL') }}
+Id={{ MY_DMR_ID | default('1234567') }}{{ MY_ESSID | default('01') }}
+Timeout={{ TIMEOUT | default('180') }}
+
+[DMR Network]
+Enable=1
+Address={{ BM_MASTER_HOST | default('master.example.org') }}
+Port={{ BM_MASTER_PORT | default('62031') }}
+Password={{ BM_PASSWORD | default('changeme') }}
+Slot={{ DEFAULT_SLOT | default('2') }}
+TG={{ DEFAULT_TALKGROUP | default('91') }}
+Options={{ DMR_OPTIONS | default('StartRef=4000;RelinkTime=30;Userlink=1;TS2_1=91;TS2_2=9') }}
+

@@ -10,14 +10,13 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
        ca-certificates bash curl git build-essential cmake pkg-config \
        libssl-dev libasound2-dev libconfig++-dev libjsoncpp-dev iproute2 procps \
+       libsndfile1 python3 python3-jinja2 \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /tmp/build
 RUN git clone --depth 1 https://github.com/DVSwitch/Analog_Bridge.git \
-    && cd Analog_Bridge \
-    && make -j"$(nproc)" \
-    && install -m 0755 Analog_Bridge /usr/local/bin/Analog_Bridge \
-    && strip /usr/local/bin/Analog_Bridge || true \
+    && cd Analog_Bridge/bin \
+    && install -m 0755 Analog_Bridge.amd64 /usr/local/bin/Analog_Bridge \
     && cd / \
     && rm -rf /tmp/build
 
@@ -25,8 +24,10 @@ RUN useradd -r -u 1000 -g nogroup -d /var/lib/dvswitch -s /usr/sbin/nologin dvsw
     && mkdir -p /var/lib/dvswitch /etc/dvswitch /config \
     && chown -R dvswitch:nogroup /var/lib/dvswitch /etc/dvswitch /config
 
+# Note: Build context is pinned as the dir containing the Dockerfile. Do not change.
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-COPY config/Analog_Bridge.ini /usr/share/dvswitch/Analog_Bridge.sample.ini
+COPY Analog_Bridge.ini.j2 /usr/share/dvswitch/Analog_Bridge.ini.j2
+COPY dvsm.macro.j2 /usr/share/dvswitch/dvsm.macro.j2
 RUN chmod +x /usr/local/bin/entrypoint.sh
 
 USER dvswitch

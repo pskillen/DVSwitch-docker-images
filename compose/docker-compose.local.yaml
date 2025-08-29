@@ -1,60 +1,50 @@
-version: "3.9"
-
-networks:
-  dvswitch_net:
-    driver: bridge
 
 services:
   mmdvm_bridge:
     image: dvswitch/mmdvm_bridge:local
     build:
-      context: ..
-      dockerfile: docker/mmdvm_bridge/Dockerfile
-    networks: [dvswitch_net]
+      context: ../docker/mmdvm_bridge
+    networks: 
+      - dvswitch_net
     env_file:
-      - ./env/mmdvm_bridge.env.example
-    volumes:
-      - ../docker/mmdvm_bridge/config/mmdvm_bridge.ini:/config/mmdvm_bridge.ini:ro
+      - ./env/.env.common
+      - ./env/.env.mmdvm_bridge
     healthcheck:
       test: ["CMD", "pgrep", "-x", "MMDVM_Bridge"]
       interval: 15s
       timeout: 5s
       retries: 20
-    profiles: [local]
 
   analog_bridge:
     image: dvswitch/analog_bridge:local
     build:
-      context: ..
-      dockerfile: docker/analog_bridge/Dockerfile
-    networks: [dvswitch_net]
+      context: ../docker/analog_bridge
+    networks: 
+      - dvswitch_net
     depends_on:
       mmdvm_bridge:
         condition: service_healthy
     env_file:
-      - ./env/analog_bridge.env.example
-    volumes:
-      - ../docker/analog_bridge/config/Analog_Bridge.ini:/config/Analog_Bridge.ini:ro
+      - ./env/.env.common
+      - ./env/.env.analog_bridge
     healthcheck:
       test: ["CMD", "sh", "-c", "ss -lunpt | grep -E ':${USRP_RX_PORT:-32001}|:${USRP_TX_PORT:-32002}'"]
       interval: 15s
       timeout: 5s
       retries: 20
-    profiles: [local]
 
   analog_reflector:
     image: dvswitch/analog_reflector:local
     build:
-      context: ..
-      dockerfile: docker/analog_reflector/Dockerfile
-    networks: [dvswitch_net]
+      context: ../docker/analog_reflector
+    networks: 
+      - dvswitch_net
     depends_on:
       analog_bridge:
         condition: service_healthy
     env_file:
-      - ./env/analog_reflector.env.example
-    volumes:
-      - ../docker/analog_reflector/config/Analog_Reflector.json:/config/Analog_Reflector.json:ro
+      - ./env/.env.common
+      - ./env/.env.analog_reflector
     ports:
       - "12345:12345/tcp"
     healthcheck:
@@ -62,5 +52,7 @@ services:
       interval: 15s
       timeout: 5s
       retries: 20
-    profiles: [local]
 
+networks:
+  dvswitch_net:
+    driver: bridge
