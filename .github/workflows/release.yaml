@@ -71,5 +71,8 @@ jobs:
             if [[ "${{ steps.meta.outputs.is_prerelease }}" == "false" ]]; then
               docker tag dvswitch/${comp}:build-ci ${IMAGE}:latest
               docker push ${IMAGE}:latest
+            else
+              docker tag dvswitch/${comp}:build-ci ${IMAGE}:latest-rc
+              docker push ${IMAGE}:latest-rc
             fi
           done
