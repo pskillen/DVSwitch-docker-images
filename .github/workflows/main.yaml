@@ -14,8 +14,16 @@ env:
   REPO_NAME: ${{ github.repository }}
 
 jobs:
+  unit-tests:
+    uses: ./.github/workflows/unit-tests.yaml
+
+  integration-tests:
+    uses: ./.github/workflows/integration-tests.yaml
+    needs: unit-tests
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,4 +65,31 @@ jobs:
             docker tag dvswitch/${comp}:build-ci ${IMAGE}:dev
             docker push ${IMAGE}:dev
           done
+
+  test-report:
+    runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
+    permissions:
+      contents: read
+      checks: write
+    steps:
+      - name: Download unit test results
+        uses: actions/download-artifact@v4
+        with:
+          name: unit-test-results
+          path: test-results/
+
+      - name: Download integration test results
+        uses: actions/download-artifact@v4
+        with:
+          name: integration-test-results
+          path: test-results/
+
+      - name: Test Report
+        uses: dorny/test-reporter@v1
+        with:
+          name: DVSwitch Tests
+          path: test-results/
+          reporter: java-junit
+          fail-on-error: true
 
