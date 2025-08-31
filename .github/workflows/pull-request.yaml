@@ -1,4 +1,4 @@
-name: CI - PR
+name: Pull request
 
 on:
   pull_request:
@@ -18,28 +18,13 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Build mmdvm_bridge
-        run: |
-          docker buildx build --platform linux/amd64 -f Dockerfile -t dvswitch/mmdvm_bridge:local --load .
-        working-directory: docker/mmdvm_bridge
-
-      - name: Build analog_bridge
-        run: |
-          docker buildx build --platform linux/amd64 -f Dockerfile -t dvswitch/analog_bridge:local --load .
-        working-directory: docker/analog_bridge
-
-      - name: Build analog_reflector
-        run: |
-          docker buildx build --platform linux/amd64 -f Dockerfile -t dvswitch/analog_reflector:local --load .
-        working-directory: docker/analog_reflector
-
       - name: Setup .env files
         run: |
           ./compose/env/setup-env.sh
 
-      - name: Compose up
+      - name: Build and start services
         run: |
-          docker compose -f compose/docker-compose.local.yaml up -d --build
+          docker compose -f compose/docker-compose.ci.yaml up -d --build
 
       - name: Wait for health
         run: |
@@ -63,5 +48,10 @@ jobs:
       - name: Show logs on failure
         if: failure()
         run: |
-          docker compose -f compose/docker-compose.local.yaml logs --no-color || true
+          docker compose -f compose/docker-compose.ci.yaml logs --no-color || true
+
+      - name: Cleanup
+        if: always()
+        run: |
+          docker compose -f compose/docker-compose.ci.yaml down -v
 
