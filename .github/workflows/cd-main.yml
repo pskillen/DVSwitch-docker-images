@@ -11,7 +11,7 @@ permissions:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_REPO: ${{ github.repository }}
+  REPO_NAME: ${{ github.repository }}
 
 jobs:
   build-and-push:
@@ -36,19 +36,21 @@ jobs:
       - name: Compute tags
         id: meta
         run: |
-          short=${GITHUB_SHA::7}
-          echo "short=$short" >> $GITHUB_OUTPUT
+          short_sha=${GITHUB_SHA::7}
+          echo "short_sha=$short_sha" >> $GITHUB_OUTPUT
+          repo_name_lower=$(echo $REPO_NAME | tr '[:upper:]' '[:lower:]')
+          echo "repo_name_lower=$repo_name_lower" >> $GITHUB_OUTPUT
 
       - name: Build and push images (multi-arch)
         run: |
           set -eux
           for comp in mmdvm_bridge analog_bridge analog_reflector; do
-            IMAGE="${REGISTRY}/${IMAGE_REPO}/${comp}"
+            IMAGE="${REGISTRY}/${{ steps.meta.outputs.repo_name_lower }}/${comp}"
             docker buildx build \
               --platform linux/amd64,linux/arm64 \
               -f docker/${comp}/Dockerfile \
               -t ${IMAGE}:latest \
-              -t ${IMAGE}:sha-${{ steps.meta.outputs.short }} \
+              -t ${IMAGE}:sha-${{ steps.meta.outputs.short_sha }} \
               --push .
           done
 
