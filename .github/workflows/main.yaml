@@ -1,4 +1,4 @@
-name: CD - Main
+name: Main
 
 on:
   push:
@@ -54,9 +54,7 @@ jobs:
           set -eux
           for comp in mmdvm_bridge analog_bridge analog_reflector; do
             IMAGE="${REGISTRY}/${{ steps.meta.outputs.repo_name_lower }}/${comp}"
-            docker tag dvswitch/${comp}:build-ci ${IMAGE}:latest
-            docker tag dvswitch/${comp}:build-ci ${IMAGE}:sha-${{ steps.meta.outputs.short_sha }}
-            docker push ${IMAGE}:latest
-            docker push ${IMAGE}:sha-${{ steps.meta.outputs.short_sha }}
+            docker tag dvswitch/${comp}:build-ci ${IMAGE}:dev
+            docker push ${IMAGE}:dev
           done
 
