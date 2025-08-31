@@ -28,7 +28,7 @@ pcmPort = {{ PCM_PORT | default('2222') }}                          ; UDP port t
 
 [USRP]
 address = {{ USRP_PEER_HOST | default('127.0.0.1') }}                     ; IP address of USRP partner (Allstar/Asterisk or another Analog_Bridge)
-txPort = {{ USRP_TX_PORT | default('32001') }}                          ; Transmit USRP frames on this port
+txPort = {{ USRP_TX_PORT | default('32002') }}                          ; Transmit USRP frames on this port
 rxPort = {{ USRP_RX_PORT | default('32001') }}                          ; Listen for USRP frames on this port
 usrpAudio = {{ USRP_AUDIO | default('AUDIO_UNITY') }}                 ; Digital -> Analog (AUDIO_UNITY, AUDIO_USE_GAIN, AUDIO_USE_AGC)
 usrpGain = {{ USRP_GAIN | default('1.10') }}                         ; Gain factor when usrpAudio = AUDIO_USE_GAIN (0.0 to 5.0) (1.0 = AUDIO_UNITY)
@@ -38,14 +38,14 @@ tlvGain = {{ TLV_GAIN | default('0.35') }}                          ; Gain facto
 
 [AMBE_AUDIO]
 address = {{ AMBE_PEER_HOST | default('127.0.0.1') }}                     ; IP address of xx_Bridge
-txPort = {{ AMBE_TX_PORT | default('32002') }}                          ; Transmit TLV frames to partner on this port
-rxPort = {{ AMBE_RX_PORT | default('32002') }}                          ; Listen for TLV frames from partner on this port
+txPort = {{ AMBE_TX_PORT | default('32004') }}                          ; Transmit TLV frames to partner on this port
+rxPort = {{ AMBE_RX_PORT | default('32003') }}                          ; Listen for TLV frames from partner on this port
 ambeMode = {{ AMBE_MODE | default('DMR') }}                          ; DMR, DMR_IPSC, DSTAR, NXDN, P25, YSFN, YSFW (encode PCM to this format)
 minTxTimeMS = {{ MIN_TX_TIME_MS | default('2500') }}                      ; Analog -> Digital Minimum time in MS for hang delay (0-10000)
 
 ; The metadata below is used when ASL is the source since it does not have any concept of digital modes
-gatewayDmrId = {{ GATEWAY_DMR_ID | default('1234567') }}                  ; ID to use when transmitting from Analog_Bridge 7 digit ID
-repeaterID = {{ REPEATER_ID | default('123456789') }}                  ; ID of source repeater 7 digit ID plus 2 digit SSID 
+gatewayDmrId = {{ GATEWAY_DMR_ID | default(MY_DMR_ID | default('1234567')) }}                  ; ID to use when transmitting from Analog_Bridge 7 digit ID
+repeaterID = {{ REPEATER_ID | default((MY_DMR_ID | default('1234567')) + (MY_ESSID | default('01'))) }}                  ; ID of source repeater 7 digit ID plus 2 digit SSID
 txTg = {{ GATEWAY_TALKGROUP | default('9') }}                                ; TG to use for all frames sent from Analog_Bridge -> xx_Bridge
 txTs = {{ GATEWAY_TIMESLOT | default('2') }}                                ; Slot to use for frames sent from Analog_Bridge -> xx_Bridge
 colorCode = {{ DMR_COLOR_CODE | default('1') }}                           ; Color Code to assign DMR frames
