@@ -41,16 +41,22 @@ jobs:
           repo_name_lower=$(echo $REPO_NAME | tr '[:upper:]' '[:lower:]')
           echo "repo_name_lower=$repo_name_lower" >> $GITHUB_OUTPUT
 
-      - name: Build and push images (multi-arch)
+      - name: Setup .env files
+        run: |
+          ./compose/env/setup-env.sh
+
+      - name: Build images
+        run: |
+          docker compose -f compose/docker-compose.ci.yaml build
+
+      - name: Tag and push images
         run: |
           set -eux
           for comp in mmdvm_bridge analog_bridge analog_reflector; do
             IMAGE="${REGISTRY}/${{ steps.meta.outputs.repo_name_lower }}/${comp}"
-            docker buildx build \
-              --platform linux/amd64,linux/arm64 \
-              -f docker/${comp}/Dockerfile \
-              -t ${IMAGE}:latest \
-              -t ${IMAGE}:sha-${{ steps.meta.outputs.short_sha }} \
-              --push .
+            docker tag dvswitch/${comp}:build-ci ${IMAGE}:latest
+            docker tag dvswitch/${comp}:build-ci ${IMAGE}:sha-${{ steps.meta.outputs.short_sha }}
+            docker push ${IMAGE}:latest
+            docker push ${IMAGE}:sha-${{ steps.meta.outputs.short_sha }}
           done
 
