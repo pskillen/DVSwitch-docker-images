@@ -1,4 +1,10 @@
+# Sensitive info
 .env
 .env.*
+
+# Log output
 *.log
-**/config/*.real.*
+
+# Intellij
+*.iml
+.idea/
