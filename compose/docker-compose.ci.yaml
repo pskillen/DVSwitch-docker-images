@@ -46,7 +46,7 @@ services:
       analog_bridge:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "sh", "-c", "nc -z localhost ${MOBILE_PORT:-12345}"]
+      test: ["CMD", "sh", "-c", "ss -lunpt | grep -E ':12346'"]
       interval: 15s
       timeout: 5s
       retries: 20
