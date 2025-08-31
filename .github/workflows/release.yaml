@@ -1,0 +1,75 @@
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  REPO_NAME: ${{ github.repository }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Compute tags
+        id: meta
+        run: |
+          # Extract version from release tag
+          VERSION="${{ github.event.release.tag_name }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          
+          # Check if this is a prerelease
+          if [[ "${{ github.event.release.prerelease }}" == "true" ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "docker_tag=$VERSION" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "docker_tag=$VERSION" >> $GITHUB_OUTPUT
+          fi
+          
+          repo_name_lower=$(echo $REPO_NAME | tr '[:upper:]' '[:lower:]')
+          echo "repo_name_lower=$repo_name_lower" >> $GITHUB_OUTPUT
+
+      - name: Setup .env files
+        run: |
+          ./compose/env/setup-env.sh
+
+      - name: Build images
+        run: |
+          docker compose -f compose/docker-compose.ci.yaml build
+
+      - name: Tag and push images
+        run: |
+          set -eux
+          for comp in mmdvm_bridge analog_bridge analog_reflector; do
+            IMAGE="${REGISTRY}/${{ steps.meta.outputs.repo_name_lower }}/${comp}"
+            docker tag dvswitch/${comp}:build-ci ${IMAGE}:${{ steps.meta.outputs.docker_tag }}
+            docker push ${IMAGE}:${{ steps.meta.outputs.docker_tag }}
+            
+            # For full releases, also tag as 'latest'
+            if [[ "${{ steps.meta.outputs.is_prerelease }}" == "false" ]]; then
+              docker tag dvswitch/${comp}:build-ci ${IMAGE}:latest
+              docker push ${IMAGE}:latest
+            fi
+          done
