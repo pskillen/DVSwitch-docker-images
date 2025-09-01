@@ -1,16 +1,17 @@
 """
 Pytest configuration for DVSwitch tests
 """
+import os
 import pytest
 import subprocess
 import time
 import docker
 from pathlib import Path
 
-# Test configuration
-TEST_TIMEOUT = 300  # 5 minutes
-HEALTH_CHECK_INTERVAL = 15
-HEALTH_CHECK_RETRIES = 20
+# Test configuration (override with env for local runs)
+TEST_TIMEOUT = int(os.getenv("DVS_TEST_TIMEOUT", "300"))
+HEALTH_CHECK_INTERVAL = int(os.getenv("DVS_HEALTHCHECK_INTERVAL", "5"))
+HEALTH_CHECK_RETRIES = int(os.getenv("DVS_HEALTHCHECK_RETRIES", "60"))
 
 @pytest.fixture(scope="session")
 def docker_compose_file():
@@ -23,40 +24,28 @@ def docker_client():
     return docker.from_env()
 
 @pytest.fixture(scope="session")
-def test_environment():
-    """Setup test environment and return cleanup function"""
-    print("\n🚀 Setting up DVSwitch test environment...")
-    
-    # Start services
-    compose_file = Path(__file__).parent.parent / "compose" / "docker-compose.ci.yaml"
-    subprocess.run([
-        "docker", "compose", "-f", str(compose_file), "up", "-d", "--build"
-    ], check=True)
-    
+def test_environment(docker_compose_file):
+    """Assumes stack is already managed externally. Only wait for healthy services."""
+    print("\n🔎 Verifying DVSwitch stack health (pytest will not start/stop containers)...")
+
     # Wait for services to be healthy
-    print("⏳ Waiting for services to be healthy...")
     for attempt in range(HEALTH_CHECK_RETRIES):
         result = subprocess.run([
-            "docker", "compose", "-f", str(compose_file), "ps"
-        ], capture_output=True, text=True, check=True)
-        
-        if "unhealthy" not in result.stdout and "starting" not in result.stdout:
-            print("✅ All services are healthy!")
+            "docker", "compose", "-f", str(docker_compose_file), "ps"
+        ], capture_output=True, text=True)
+
+        if result.returncode == 0 and "unhealthy" not in result.stdout and "starting" not in result.stdout:
+            print("✅ Services are healthy (or no healthchecks defined).")
             break
-        
+
         if attempt < HEALTH_CHECK_RETRIES - 1:
-            print(f"⏳ Waiting for services... (attempt {attempt + 1}/{HEALTH_CHECK_RETRIES})")
             time.sleep(HEALTH_CHECK_INTERVAL)
         else:
+            print(result.stdout)
             pytest.fail("Services did not become healthy in time")
-    
+
     yield
-    
-    # Cleanup
-    print("\n🧹 Cleaning up test environment...")
-    subprocess.run([
-        "docker", "compose", "-f", str(compose_file), "down", "-v"
-    ], check=True)
+    # No cleanup here; lifecycle managed by scripts/CI
 
 @pytest.fixture
 def service_ports():
