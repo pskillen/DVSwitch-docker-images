@@ -8,6 +8,7 @@ on:
 permissions:
   contents: read
   packages: write
+  checks: write
 
 env:
   REGISTRY: ghcr.io
@@ -65,31 +66,3 @@ jobs:
             docker tag dvswitch/${comp}:build-ci ${IMAGE}:dev
             docker push ${IMAGE}:dev
           done
-
-  test-report:
-    runs-on: ubuntu-latest
-    needs: [unit-tests, integration-tests]
-    permissions:
-      contents: read
-      checks: write
-    steps:
-      - name: Download unit test results
-        uses: actions/download-artifact@v4
-        with:
-          name: unit-test-results
-          path: test-results/
-
-      - name: Download integration test results
-        uses: actions/download-artifact@v4
-        with:
-          name: integration-test-results
-          path: test-results/
-
-      - name: Test Report
-        uses: dorny/test-reporter@v1
-        with:
-          name: DVSwitch Tests
-          path: test-results/
-          reporter: java-junit
-          fail-on-error: true
-
