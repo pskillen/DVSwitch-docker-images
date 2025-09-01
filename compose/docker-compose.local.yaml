@@ -1,14 +1,39 @@
 
 services:
+  dmr_master:
+    image: dvswitch/testing-hblink3:local
+    build:
+      context: ../docker/testing/hblink3
+    networks:
+      - dvswitch_net
+    environment:
+      DMR_MASTER_PORT: 62031
+      DMR_MASTER_PASSWORD: ${BM_PASSWORD:-passw0rd}
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ss -lunp | grep -q ':${DMR_MASTER_PORT:-62031}'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
   mmdvm_bridge:
     image: dvswitch/mmdvm_bridge:local
     build:
       context: ../docker/mmdvm_bridge
-    networks: 
+    networks:
       - dvswitch_net
+    depends_on:
+      dmr_master:
+        condition: service_healthy
     env_file:
       - ./env/.env.common
       - ./env/.env.mmdvm_bridge
+    # NB: The values below override the .env files, and connect the bridge
+    # to the hblink3 DMR master specified above. If you want to connect
+    # to another DMR master you can comment out the lines below
+    environment:
+      BM_MASTER_HOST: dmr_master
+      BM_MASTER_PORT: 62031
+      BM_PASSWORD: ${BM_PASSWORD:-passw0rd}
     healthcheck:
       test: ["CMD", "pgrep", "-x", "MMDVM_Bridge"]
       interval: 15s
@@ -19,7 +44,7 @@ services:
     image: dvswitch/analog_bridge:local
     build:
       context: ../docker/analog_bridge
-    networks: 
+    networks:
       - dvswitch_net
     depends_on:
       mmdvm_bridge:
@@ -37,7 +62,7 @@ services:
     image: dvswitch/analog_reflector:local
     build:
       context: ../docker/analog_reflector
-    networks: 
+    networks:
       - dvswitch_net
     depends_on:
       analog_bridge:

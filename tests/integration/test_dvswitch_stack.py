@@ -23,6 +23,7 @@ class TestDVSwitchStack:
         assert "analog_reflector" in output, "Analog_Reflector not found"
         assert "analog_bridge" in output, "Analog_Bridge not found"
         assert "mmdvm_bridge" in output, "MMDVM_Bridge not found"
+        assert "dmr_master" in output, "DMR master (HBlink3) not found"
     
     def test_analog_reflector_mobile_port(self, service_ports):
         """Test Analog_Reflector mobile app port accessibility"""
@@ -84,6 +85,29 @@ class TestDVSwitchStack:
         sock.sendto(b"test", ('localhost', usrp_port))
         sock.close()
         assert True
+
+    def test_mmdvm_bridge_registers_with_master(self):
+        """Wait for MMDVM_Bridge to register with the test DMR master."""
+        import re
+        # Tail master logs and look for registration/peer lines
+        for _ in range(20):
+            result = subprocess.run([
+                "docker", "compose", "-f", "compose/docker-compose.ci.yaml",
+                "logs", "--tail=200", "dmr_master"
+            ], capture_output=True, text=True, check=True)
+            logs = result.stdout
+            if re.search(r"(peer|client).*(connected|register|active)", logs, re.IGNORECASE):
+                return
+            time.sleep(5)
+        pytest.fail("MMDVM_Bridge did not register with DMR master in time")
+
+    def test_master_port_listening(self):
+        """Ensure DMR master UDP port is listening."""
+        result = subprocess.run([
+            "docker", "exec", "compose-dmr_master-1",
+            "sh", "-c", "ss -lunp | grep -q ':62031'"
+        ])
+        assert result.returncode == 0, "DMR master port 62031 is not listening"
     
     def test_mobile_app_simulation(self, service_ports):
         """Simulate mobile app connection and data transmission"""
@@ -110,6 +134,34 @@ class TestDVSwitchStack:
             sock.close()
         
         assert True  # Test passes if no exceptions
+
+    def test_optional_websocket_handshake(self, service_ports):
+        """Attempt a WebSocket handshake to Analog_Reflector if it serves WS; skip if refused."""
+        try:
+            import websocket  # type: ignore
+        except Exception:
+            pytest.skip("websocket-client not installed")
+        port = service_ports["analog_reflector_mobile"]
+        url = f"ws://127.0.0.1:{port}/"
+        try:
+            ws = websocket.create_connection(url, timeout=3)
+            ws.close()
+            assert True
+        except Exception as e:
+            # If WS endpoint is not present, that is OK; ensure TCP is reachable already.
+            pytest.skip(f"WebSocket upgrade not supported on port {port}: {e}")
+
+    def test_usrp_smoke_send(self, service_ports):
+        """Send a minimal UDP datagram to Analog_Bridge USRP RX as a smoke test."""
+        rx_port = service_ports["analog_bridge_usrp_rx"]
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(2)
+        try:
+            # Send a minimal HB/USRP-like header (not full spec) just to exercise socket path
+            sock.sendto(b"USRP_TEST", ("127.0.0.1", rx_port))
+        finally:
+            sock.close()
+        assert True
     
     def test_service_logs(self, test_environment):
         """Test that services are generating logs without critical errors"""

@@ -1,14 +1,36 @@
 
 services:
+  dmr_master:
+    image: dvswitch/testing-hblink3:build-ci
+    build:
+      context: ../docker/testing/hblink3
+    networks:
+      - dvswitch_net
+    environment:
+      DMR_MASTER_PORT: 62031
+      DMR_MASTER_PASSWORD: ${BM_PASSWORD:-passw0rd}
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ss -lunp | grep -q ':${DMR_MASTER_PORT:-62031}'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
   mmdvm_bridge:
     image: dvswitch/mmdvm_bridge:build-ci
     build:
       context: ../docker/mmdvm_bridge
     networks:
       - dvswitch_net
+    depends_on:
+      dmr_master:
+        condition: service_healthy
     env_file:
       - ./env/.env.common
       - ./env/.env.mmdvm_bridge
+    environment:
+      BM_MASTER_HOST: dmr_master
+      BM_MASTER_PORT: 62031
+      BM_PASSWORD: ${BM_PASSWORD:-passw0rd}
     healthcheck:
       test: ["CMD", "pgrep", "-x", "MMDVM_Bridge"]
       interval: 15s

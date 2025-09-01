@@ -4,3 +4,4 @@ pytest-xdist>=3.0.0
 pytest-timeout>=2.0.0
 pytest-html>=3.0.0
 docker>=6.0.0
+websocket-client>=1.8.0
