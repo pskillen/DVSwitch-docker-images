@@ -26,7 +26,7 @@ This document describes the port configuration and network topology for the DVSw
 ### Analog_Bridge ↔ MMDVM_Bridge (AMBE Protocol)
 - **Analog_Bridge** sends to **MMDVM_Bridge** on port `32004` (AMBE_TX_PORT)
 - **Analog_Bridge** listens from **MMDVM_Bridge** on port `32003` (AMBE_RX_PORT)
-- **MMDVM_Bridge** connects to **Analog_Bridge** on port `32004` (AMBE_RX_PORT)
+- **MMDVM_Bridge** connects to **Analog_Bridge** on port `32003` (Analog_Bridge AMBE_RX_PORT)
 
 ### External Ports
 - **Analog_Reflector**: Port `12345` (exposed to host for mobile app)
