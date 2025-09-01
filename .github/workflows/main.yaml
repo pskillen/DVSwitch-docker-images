@@ -8,14 +8,23 @@ on:
 permissions:
   contents: read
   packages: write
+  checks: write
 
 env:
   REGISTRY: ghcr.io
   REPO_NAME: ${{ github.repository }}
 
 jobs:
+  unit-tests:
+    uses: ./.github/workflows/unit-tests.yaml
+
+  integration-tests:
+    uses: ./.github/workflows/integration-tests.yaml
+    needs: unit-tests
+
   build-and-push:
     runs-on: ubuntu-latest
+    needs: [unit-tests, integration-tests]
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -57,4 +66,3 @@ jobs:
             docker tag dvswitch/${comp}:build-ci ${IMAGE}:dev
             docker push ${IMAGE}:dev
           done
-

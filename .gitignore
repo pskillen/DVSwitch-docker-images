@@ -8,3 +8,9 @@
 # Intellij
 *.iml
 .idea/
+
+# Python and test results
+test-results/
+__pycache__/
+.pytest_cache/
+venv/

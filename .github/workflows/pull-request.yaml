@@ -3,55 +3,15 @@ name: Pull request
 on:
   pull_request:
 
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
 jobs:
-  build-and-test:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+  unit-tests:
+    uses: ./.github/workflows/unit-tests.yaml
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Setup .env files
-        run: |
-          ./compose/env/setup-env.sh
-
-      - name: Build and start services
-        run: |
-          docker compose -f compose/docker-compose.ci.yaml up -d --build
-
-      - name: Wait for health
-        run: |
-          set -eux
-          end=$((SECONDS+300))
-          while [ $SECONDS -lt $end ]; do
-            unhealthy=$(docker ps --format '{{.Names}} {{.Status}}' | grep -E '(unhealthy|Restarting)' || true)
-            if [ -z "$unhealthy" ]; then
-              states=$(docker ps --format '{{.Names}} {{.Status}}')
-              echo "$states"
-              ready=$(echo "$states" | grep -c '(healthy)')
-              if [ "$ready" -ge 3 ]; then
-                exit 0
-              fi
-            fi
-            sleep 5
-          done
-          echo "Services did not become healthy in time" >&2
-          exit 1
-
-      - name: Show logs on failure
-        if: failure()
-        run: |
-          docker compose -f compose/docker-compose.ci.yaml logs --no-color || true
-
-      - name: Cleanup
-        if: always()
-        run: |
-          docker compose -f compose/docker-compose.ci.yaml down -v
-
+  integration-tests:
+    uses: ./.github/workflows/integration-tests.yaml
+    needs: unit-tests
