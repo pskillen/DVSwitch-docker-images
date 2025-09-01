@@ -4,7 +4,7 @@ services:
     image: dvswitch/mmdvm_bridge:build-ci
     build:
       context: ../docker/mmdvm_bridge
-    networks: 
+    networks:
       - dvswitch_net
     env_file:
       - ./env/.env.common
@@ -19,14 +19,14 @@ services:
     image: dvswitch/analog_bridge:build-ci
     build:
       context: ../docker/analog_bridge
-    networks: 
+    networks:
       - dvswitch_net
-    env_file:
-      - ./env/.env.common
-      - ./env/.env.analog_bridge
     depends_on:
       mmdvm_bridge:
         condition: service_healthy
+    env_file:
+      - ./env/.env.common
+      - ./env/.env.analog_bridge
     healthcheck:
       test: ["CMD", "sh", "-c", "ss -lunpt | grep -E ':${USRP_RX_PORT:-32001}|:${USRP_TX_PORT:-32002}'"]
       interval: 15s
@@ -37,14 +37,16 @@ services:
     image: dvswitch/analog_reflector:build-ci
     build:
       context: ../docker/analog_reflector
-    networks: 
+    networks:
       - dvswitch_net
-    env_file:
-      - ./env/.env.common
-      - ./env/.env.analog_reflector
     depends_on:
       analog_bridge:
         condition: service_healthy
+    env_file:
+      - ./env/.env.common
+      - ./env/.env.analog_reflector
+    ports:
+      - "12345:12345/tcp"
     healthcheck:
       test: ["CMD", "sh", "-c", "ss -lunpt | grep -E ':12346'"]
       interval: 15s
