@@ -5,7 +5,6 @@ import os
 import pytest
 import subprocess
 import time
-import docker
 from pathlib import Path
 
 # Test configuration (override with env for local runs)
@@ -17,11 +16,6 @@ HEALTH_CHECK_RETRIES = int(os.getenv("DVS_HEALTHCHECK_RETRIES", "60"))
 def docker_compose_file():
     """Path to docker-compose file for testing"""
     return Path(__file__).parent.parent / "compose" / "docker-compose.ci.yaml"
-
-@pytest.fixture(scope="session")
-def docker_client():
-    """Docker client for container management"""
-    return docker.from_env()
 
 @pytest.fixture(scope="session")
 def test_environment(docker_compose_file):
