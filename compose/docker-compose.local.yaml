@@ -9,6 +9,8 @@ services:
     environment:
       DMR_MASTER_PORT: 62031
       DMR_MASTER_PASSWORD: ${BM_PASSWORD:-passw0rd}
+    ports:
+      - "62031:62031/udp"
     healthcheck:
       test: ["CMD", "sh", "-c", "ss -lunp | grep -q ':${DMR_MASTER_PORT:-62031}'"]
       interval: 15s
@@ -21,19 +23,19 @@ services:
       context: ../docker/mmdvm_bridge
     networks:
       - dvswitch_net
-    depends_on:
-      dmr_master:
-        condition: service_healthy
+    # depends_on:
+      # dmr_master:
+        # condition: service_healthy
     env_file:
       - ./env/.env.common
       - ./env/.env.mmdvm_bridge
     # NB: The values below override the .env files, and connect the bridge
     # to the hblink3 DMR master specified above. If you want to connect
     # to another DMR master you can comment out the lines below
-    environment:
-      BM_MASTER_HOST: dmr_master
-      BM_MASTER_PORT: 62031
-      BM_PASSWORD: ${BM_PASSWORD:-passw0rd}
+    # environment:
+      # BM_MASTER_HOST: dmr_master
+      # BM_MASTER_PORT: 62031
+      # BM_PASSWORD: ${BM_PASSWORD:-passw0rd}
     healthcheck:
       test: ["CMD", "pgrep", "-x", "MMDVM_Bridge"]
       interval: 15s
