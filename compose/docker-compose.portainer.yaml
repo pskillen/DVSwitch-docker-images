@@ -1,0 +1,119 @@
+services:
+  mmdvm_bridge:
+    image: ghcr.io/pskillen/dvswitch-docker-images/mmdvm_bridge:dev
+    networks:
+      - dvswitch_net
+
+    environment:
+      MY_CALLSIGN: ${MY_CALLSIGN}
+      MY_DMR_ID: ${MY_DMR_ID}
+      MY_ESSID: ${MY_ESSID}
+      BM_MASTER_HOST: ${BM_MASTER_HOST}
+      BM_MASTER_PORT: ${BM_MASTER_PORT}
+      BM_PASSWORD: ${BM_PASSWORD}
+
+      DEFAULT_TALKGROUP: ${DEFAULT_TALKGROUP}
+      DEFAULT_SLOT: ${DEFAULT_SLOT}
+
+      DMR_OPTIONS: StartRef=4000;RelinkTime=30;Userlink=1;TS2_1=91;TS2_2=9
+
+
+      TIMEOUT: 180
+      AMBE_PEER_HOST: analog_bridge
+      AMBE_RX_PORT: 31103
+      AMBE_TX_PORT: 31100
+
+    healthcheck:
+      test: ["CMD", "pgrep", "-x", "MMDVM_Bridge"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  analog_bridge:
+    image: ghcr.io/pskillen/dvswitch-docker-images/analog_bridge:dev
+    networks:
+      - dvswitch_net
+    depends_on:
+      mmdvm_bridge:
+        condition: service_healthy
+    environment:
+      EXPORT_METADATA: true
+      TRANSFER_ROOT_DIR: /tmp
+      SUBSCRIBER_FILE: /var/lib/dvswitch/subscriber_ids.csv
+
+      MY_DMR_ID: ${MY_DMR_ID}
+      MY_ESSID: ${MY_ESSID}
+
+
+      # Vocoder settings
+      DECODER_FALLBACK: true
+      USE_EMULATOR: false
+      EMULATOR_ADDRESS: 127.0.0.1:2470
+
+      # Audio processing settings
+      USRP_AUDIO: AUDIO_UNITY
+      USRP_GAIN: 1.10
+      USRP_AGC: -20,10,100
+      TLV_AUDIO: AUDIO_UNITY
+      TLV_GAIN: 0.35
+
+      # AMBE mode (DMR, DMR_IPSC, DSTAR, NXDN, P25, YSFN, YSFW)
+      AMBE_MODE: DMR
+
+      # Minimum transmission time in milliseconds
+      MIN_TX_TIME_MS: 2500
+
+
+      # Default talkgroup for gateway transmissions
+      GATEWAY_TALKGROUP: 9
+      # Default timeslot for gateway transmissions
+      GATEWAY_TIMESLOT: 2
+      DMR_COLOR_CODE: 1
+
+      # USRP ports (Analog_Bridge <-> Analog_Reflector) – upstream defaults
+      # Both RX/TX default to 31001 in DVSwitch packages
+      USRP_RX_PORT: 31001
+      USRP_TX_PORT: 31001
+      # USRP peer host (Analog_Reflector service hostname)
+      USRP_PEER_HOST: analog_reflector
+
+      # AMBE peer settings (Analog_Bridge <-> MMDVM_Bridge) – upstream defaults
+      # AB listens on 31100 and sends to partner 31103 by default
+      AMBE_PEER_HOST: mmdvm_bridge
+      AMBE_RX_PORT: 31100
+      AMBE_TX_PORT: 31103
+
+      # PCM port (Analog_Bridge)
+      PCM_PORT: 2222
+
+    healthcheck:
+      test: ["CMD", "sh", "-c", "ss -lunpt | grep -E ':${USRP_RX_PORT:-31001}|:${USRP_TX_PORT:-31001}'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+  analog_reflector:
+    image:  ghcr.io/pskillen/dvswitch-docker-images/analog_reflector:dev
+    networks:
+      - dvswitch_net
+    depends_on:
+      analog_bridge:
+        condition: service_healthy
+    environment:
+      CLIENT_TOKEN: ''
+      MOBILE_PORT: 12345
+      USRP_PEER_HOST: analog_bridge
+      USRP_PEER_PORT: 31001
+    ports:
+      - "12345:12345"
+      - "12346:12346"
+    healthcheck:
+      test: ["CMD", "sh", "-c", "nc -z localhost ${MOBILE_PORT:-12345} || ss -lunpt | grep -q ':12346'"]
+      interval: 15s
+      timeout: 5s
+      retries: 20
+
+
+networks:
+  dvswitch_net:
+    driver: bridge
