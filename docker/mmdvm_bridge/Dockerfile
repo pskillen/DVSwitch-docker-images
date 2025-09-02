@@ -6,35 +6,24 @@ LABEL org.opencontainers.image.source="https://github.com/${GITHUB_REPOSITORY}" 
       org.opencontainers.image.licenses="MIT"
 
 ENV DEBIAN_FRONTEND=noninteractive \
-    MMDVM_BRIDGE_VERSION=latest \
     TZ=UTC
 
-RUN apt-get update \
+# Add DVSwitch apt repository and install packages
+# Stub systemctl to satisfy package postinst scripts in minimal containers
+RUN printf '#!/bin/sh\nexit 0\n' > /bin/systemctl \
+    && chmod +x /bin/systemctl \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates bash curl gnupg \
+    && curl -fsSL http://dvswitch.org/DVSwitch_Repository/dvswitch.gpg.key | gpg --dearmor -o /usr/share/keyrings/dvswitch-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/dvswitch-keyring.gpg] http://dvswitch.org/DVSwitch_Repository bookworm hamradio" > /etc/apt/sources.list.d/dvswitch.list \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
-       ca-certificates \
-       bash \
-       curl \
-       git \
-       build-essential \
-       cmake \
-       pkg-config \
-       libssl-dev \
-       libasound2-dev \
-       libconfig++-dev \
-       libjsoncpp-dev \
+       mmdvm-bridge \
        iproute2 \
        procps \
        python3 \
        python3-jinja2 \
     && rm -rf /var/lib/apt/lists/*
-
-# Install MMDVM_Bridge from pre-built binaries
-WORKDIR /tmp/build
-RUN git clone --depth 1 https://github.com/DVSwitch/MMDVM_Bridge.git \
-    && cd MMDVM_Bridge/bin \
-    && install -m 0755 MMDVM_Bridge.amd64 /usr/local/bin/MMDVM_Bridge \
-    && cd / \
-    && rm -rf /tmp/build
 
 # Non-root user
 RUN useradd -r -u 1000 -g nogroup -d /var/lib/dvswitch -s /usr/sbin/nologin dvswitch \
@@ -54,5 +43,5 @@ WORKDIR /var/lib/dvswitch
 HEALTHCHECK --interval=15s --timeout=5s --retries=20 CMD pgrep -x MMDVM_Bridge >/dev/null || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["/usr/local/bin/MMDVM_Bridge", "/etc/dvswitch/mmdvm_bridge.ini"]
+CMD ["/opt/MMDVM_Bridge/MMDVM_Bridge", "/etc/dvswitch/mmdvm_bridge.ini"]
 

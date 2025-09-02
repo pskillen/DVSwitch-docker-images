@@ -6,19 +6,23 @@ LABEL org.opencontainers.image.title="DVSwitch Analog_Bridge" \
 
 ENV DEBIAN_FRONTEND=noninteractive TZ=UTC
 
-RUN apt-get update \
+# Add DVSwitch apt repository and install packages
+# Stub systemctl to satisfy package postinst scripts in minimal containers
+RUN printf '#!/bin/sh\nexit 0\n' > /bin/systemctl \
+    && chmod +x /bin/systemctl \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates bash curl gnupg \
+    && curl -fsSL http://dvswitch.org/DVSwitch_Repository/dvswitch.gpg.key | gpg --dearmor -o /usr/share/keyrings/dvswitch-keyring.gpg \
+    && echo "deb [signed-by=/usr/share/keyrings/dvswitch-keyring.gpg] http://dvswitch.org/DVSwitch_Repository bookworm hamradio" > /etc/apt/sources.list.d/dvswitch.list \
+    && apt-get update \
     && apt-get install -y --no-install-recommends \
-       ca-certificates bash curl git build-essential cmake pkg-config \
-       libssl-dev libasound2-dev libconfig++-dev libjsoncpp-dev iproute2 procps \
-       libsndfile1 python3 python3-jinja2 \
+       analog-bridge \
+       libsndfile1 \
+       iproute2 \
+       procps \
+       python3 \
+       python3-jinja2 \
     && rm -rf /var/lib/apt/lists/*
-
-WORKDIR /tmp/build
-RUN git clone --depth 1 https://github.com/DVSwitch/Analog_Bridge.git \
-    && cd Analog_Bridge/bin \
-    && install -m 0755 Analog_Bridge.amd64 /usr/local/bin/Analog_Bridge \
-    && cd / \
-    && rm -rf /tmp/build
 
 RUN useradd -r -u 1000 -g nogroup -d /var/lib/dvswitch -s /usr/sbin/nologin dvswitch \
     && mkdir -p /var/lib/dvswitch /etc/dvswitch /config \
@@ -37,5 +41,5 @@ EXPOSE 32001/udp 32002/udp
 HEALTHCHECK --interval=15s --timeout=5s --retries=20 CMD sh -c 'ss -lunpt | grep -E ":${USRP_RX_PORT:-32001}|:${USRP_TX_PORT:-32002}" >/dev/null' || exit 1
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-CMD ["/usr/local/bin/Analog_Bridge", "/etc/dvswitch/Analog_Bridge.ini"]
+CMD ["/opt/Analog_Bridge/Analog_Bridge", "/etc/dvswitch/Analog_Bridge.ini"]
 
