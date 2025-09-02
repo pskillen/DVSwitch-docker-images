@@ -17,8 +17,8 @@
   },
   "usrp": {
     "peerHost": "{{ USRP_PEER_HOST | default('analog_bridge') }}",
-    "peerPort": {{ USRP_PEER_PORT | default(32001) }},
-    "localPort": {{ (USRP_PEER_PORT | default(32001) | int) + 1 }}
+    "peerPort": {{ USRP_PEER_PORT | default(31001) }},
+    "localPort": {{ (USRP_PEER_PORT | default(31001) | int) + 1 }}
   }
 }
 

@@ -12,7 +12,7 @@ include = dvsm.macro
 
 ; General Section describes settings for Analog_Bridge itself.
 [GENERAL]
-logLevel = {{ LOG_LEVEL | default('1') }}                            ; Show messages and above 0=No logging, 1=Debug, 2=Message, 3=Info, 4=Warning, 5=Error, 6=Fatal
+logLevel = {{ LOG_LEVEL | default('2') }}                            ; Show messages and above 0=No logging, 1=Debug, 2=Message, 3=Info, 4=Warning, 5=Error, 6=Fatal
 
 ; Metadata management
 exportMetadata = {{ EXPORT_METADATA | default('true') }}                   ; Export metadata to USRP partner (transcode setups require this)
@@ -28,8 +28,8 @@ pcmPort = {{ PCM_PORT | default('2222') }}                          ; UDP port t
 
 [USRP]
 address = {{ USRP_PEER_HOST | default('127.0.0.1') }}                     ; IP address of USRP partner (Allstar/Asterisk or another Analog_Bridge)
-txPort = {{ USRP_TX_PORT | default('32002') }}                          ; Transmit USRP frames on this port
-rxPort = {{ USRP_RX_PORT | default('32001') }}                          ; Listen for USRP frames on this port
+txPort = {{ USRP_TX_PORT | default('31001') }}                          ; Transmit USRP frames on this port
+rxPort = {{ USRP_RX_PORT | default('31001') }}                          ; Listen for USRP frames on this port
 usrpAudio = {{ USRP_AUDIO | default('AUDIO_UNITY') }}                 ; Digital -> Analog (AUDIO_UNITY, AUDIO_USE_GAIN, AUDIO_USE_AGC)
 usrpGain = {{ USRP_GAIN | default('1.10') }}                         ; Gain factor when usrpAudio = AUDIO_USE_GAIN (0.0 to 5.0) (1.0 = AUDIO_UNITY)
 usrpAGC = {{ USRP_AGC | default('-20,10,100') }}                    ; Set the agc threshold (db), slope (db) and decay (ms)
@@ -38,8 +38,8 @@ tlvGain = {{ TLV_GAIN | default('0.35') }}                          ; Gain facto
 
 [AMBE_AUDIO]
 address = {{ AMBE_PEER_HOST | default('127.0.0.1') }}                     ; IP address of xx_Bridge
-txPort = {{ AMBE_TX_PORT | default('32004') }}                          ; Transmit TLV frames to partner on this port
-rxPort = {{ AMBE_RX_PORT | default('32003') }}                          ; Listen for TLV frames from partner on this port
+txPort = {{ AMBE_TX_PORT | default('31103') }}                          ; Transmit TLV frames to partner on this port
+rxPort = {{ AMBE_RX_PORT | default('31100') }}                          ; Listen for TLV frames from partner on this port
 ambeMode = {{ AMBE_MODE | default('DMR') }}                          ; DMR, DMR_IPSC, DSTAR, NXDN, P25, YSFN, YSFW (encode PCM to this format)
 minTxTimeMS = {{ MIN_TX_TIME_MS | default('2500') }}                      ; Analog -> Digital Minimum time in MS for hang delay (0-10000)
 

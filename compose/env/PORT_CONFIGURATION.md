@@ -7,7 +7,7 @@ This document describes the port configuration and network topology for the DVSw
 ```
 ┌─────────────────┐    USRP     ┌─────────────────┐    AMBE     ┌─────────────────┐
 │ Analog_Reflector│◄───────────►│  Analog_Bridge  │◄───────────►│  MMDVM_Bridge   │
-│                 │  32001/32002│                 │  32003/32004│                 │
+│                 │    31001    │                 │ 31100/31103 │                 │
 └─────────────────┘             └─────────────────┘             └─────────────────┘
          │                                │
          │                                │
@@ -20,13 +20,13 @@ This document describes the port configuration and network topology for the DVSw
 
 ### Analog_Reflector ↔ Analog_Bridge (USRP Protocol)
 - **Analog_Reflector** listens on port `12345` (mobile app)
-- **Analog_Reflector** connects to **Analog_Bridge** on port `32001` (USRP_RX_PORT)
-- **Analog_Bridge** sends to **Analog_Reflector** on port `32002` (USRP_TX_PORT)
+- **Analog_Reflector** connects to **Analog_Bridge** on port `31001` (USRP_RX_PORT)
+- **Analog_Bridge** sends to **Analog_Reflector** on port `31001` (USRP_TX_PORT)
 
 ### Analog_Bridge ↔ MMDVM_Bridge (AMBE Protocol)
-- **Analog_Bridge** sends to **MMDVM_Bridge** on port `32004` (AMBE_TX_PORT)
-- **Analog_Bridge** listens from **MMDVM_Bridge** on port `32003` (AMBE_RX_PORT)
-- **MMDVM_Bridge** connects to **Analog_Bridge** on port `32003` (Analog_Bridge AMBE_RX_PORT)
+- **Analog_Bridge** sends to partner on port `31103` (AMBE_TX_PORT)
+- **Analog_Bridge** listens from partner on port `31100` (AMBE_RX_PORT)
+- **MMDVM_Bridge** connects to **Analog_Bridge** on port `31100` (Analog_Bridge AMBE_RX_PORT)
 
 ### External Ports
 - **Analog_Reflector**: Port `12345` (exposed to host for mobile app)
@@ -41,21 +41,21 @@ This document describes the port configuration and network topology for the DVSw
 ### Analog_Bridge Variables (analog_bridge.env)
 - `GATEWAY_DMR_ID`: Calculated as `{{ MY_DMR_ID }}{{ MY_ESSID }}` (e.g., `123456701`)
 - `REPEATER_ID`: Calculated as `{{ MY_DMR_ID }}{{ MY_ESSID }}` (e.g., `123456701`)
-- `USRP_RX_PORT`: `32001` (receives from Analog_Reflector)
-- `USRP_TX_PORT`: `32002` (sends to Analog_Reflector)
-- `AMBE_RX_PORT`: `32003` (receives from MMDVM_Bridge)
-- `AMBE_TX_PORT`: `32004` (sends to MMDVM_Bridge)
+- `USRP_RX_PORT`: `31001` (receives from Analog_Reflector)
+- `USRP_TX_PORT`: `31001` (sends to Analog_Reflector)
+- `AMBE_RX_PORT`: `31100` (receives from MMDVM_Bridge)
+- `AMBE_TX_PORT`: `31103` (sends to MMDVM_Bridge)
 - `AMBE_PEER_HOST`: `mmdvm_bridge` (Docker service name)
 
 ### Analog_Reflector Variables (analog_reflector.env)
 - `MOBILE_PORT`: `12345` (mobile app port)
 - `USRP_PEER_HOST`: `analog_bridge` (Docker service name)
-- `USRP_PEER_PORT`: `32001` (connects to Analog_Bridge USRP_RX_PORT)
+- `USRP_PEER_PORT`: `31001` (connects to Analog_Bridge USRP_RX_PORT)
 
 ### MMDVM_Bridge Variables (mmdvm_bridge.env)
 - `AMBE_PEER_HOST`: `analog_bridge` (Docker service name)
-- `AMBE_RX_PORT`: `32004` (receives from Analog_Bridge AMBE_TX_PORT)
-- `AMBE_TX_PORT`: `32003` (sends to Analog_Bridge AMBE_RX_PORT)
+- `AMBE_RX_PORT`: `31103` (receives from Analog_Bridge AMBE_TX_PORT)
+- `AMBE_TX_PORT`: `31100` (sends to Analog_Bridge AMBE_RX_PORT)
 
 ## Health Checks
 
